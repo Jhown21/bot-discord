@@ -3,7 +3,7 @@ node_modules/
 npm-debug.log*
 
 # Env (nunca suba seu token!)
-.env
+config.env
 
 # PM2/Logs locais
 *.log
