@@ -1,0 +1,10 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Env (nunca suba seu token!)
+.env
+
+# PM2/Logs locais
+*.log
+.pnpm-debug.log*
