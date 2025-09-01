@@ -8,11 +8,11 @@
 
 // importa os utilitários/módulos que criamos
 const startStatusUpdater = require("../utils/updateStatus");
-const { startLogHandler } = require("../logs/logHandler"); // importa o start
-const startFullLog = require("../logs/fullLog");
-const startEventLog = require("../logs/eventLog");
-const startPerformanceLog = require("../logs/performanceLog");
-const startChatLog = require("../logs/chatLog");
+const { startLogHandler } = require("../log/logHandler"); // importa o start
+const startFullLog = require("../log/fullLog");
+const startEventLog = require("../log/eventLog");
+const startPerformanceLog = require("../log/performanceLog");
+const startChatLog = require("../log/chatLog");
 
 module.exports = {
   name: "clientReady",
