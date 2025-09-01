@@ -1,34 +1,40 @@
 // utils/translate.js
 // ✳️ Centraliza traduções dos eventos do Minecraft para português
-//     Agora também retorna o "player" (nick) para podermos mostrar o avatar no Discord.
+//     Retorna um objeto { tipo, msg, player } para ser usado nos embeds do Discord
+//     - tipo   → categoria do evento (join, quit, advancement, death, etc.)
+//     - msg    → mensagem traduzida para exibir no Discord
+//     - player → nome do jogador envolvido (se houver)
 
 function translate(line) {
-  let tipo = "default";
-  let msg = line;
-  let player = null;
+  let tipo = "default"; // categoria do evento (default = irrelevante)
+  let msg = line;       // mensagem padrão = linha original
+  let player = null;    // jogador envolvido (se houver)
 
   // ======================
-  // 🎮 ENTRADA
+  // 🎮 ENTRADA NO SERVIDOR
   // ======================
-  if (line.includes("logged in with entity id") || line.includes("joined the game")) {
-    player = line.match(/(\w+)(?=\[| joined the game)/)?.[0] || "Jogador";
+  if (line.includes("joined the game")) {
+    player = line.match(/(\w+) joined the game/)?.[1] || "Jogador";
     msg = `🟢 **${player} entrou no servidor**`;
     tipo = "join";
   }
 
   // ======================
-  // 🚪 SAÍDA
+  // 🚪 SAÍDA DO SERVIDOR
   // ======================
-  else if (line.includes("lost connection") || line.includes("left the game")) {
-    player = line.match(/^\w+/)?.[0] || "Jogador";
+  else if (line.includes("left the game")) {
+    player = line.match(/(\w+) left the game/)?.[1] || "Jogador";
     msg = `🔴 **${player} saiu do servidor**`;
     tipo = "quit";
   }
 
   // ======================
-  // 🏆 CONQUISTA
+  // 🏆 CONQUISTAS
   // ======================
-  else if (line.includes("has made the advancement")) {
+  else if (
+    line.includes("has made the advancement") &&
+    line.includes("[net.minecraft.server.MinecraftServer/]")
+  ) {
     const [, p, adv] = line.match(/(\w+) has made the advancement \[(.+)\]/) || [];
     if (p && adv) {
       player = p;
@@ -62,7 +68,7 @@ function translate(line) {
     line.includes("suffocated in a wall") ||
     line.includes("tried to swim in lava")
   ) {
-    player = line.split(" ")[0]; // pega o nome antes da primeira palavra
+    player = line.split(" ")[0]; // pega o nick antes da primeira palavra
     msg = line
       .replace("was slain by", "foi morto por")
       .replace("was shot by", "levou um tiro de")
@@ -106,6 +112,7 @@ function translate(line) {
     tipo = "server_stop";
   }
 
+  // 🔙 Retorna objeto padronizado
   return { tipo, msg, player };
 }
 

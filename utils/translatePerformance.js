@@ -1,10 +1,30 @@
 // utils/translatePerformance.js
 // ✳️ Traduz mensagens de performance do Minecraft para português
-//     Compatível com Vanilla, Forge e NeoForge (mods como Spark, AllTheLeaks, TickProfiler, etc.)
+//     Compatível com Vanilla, Forge e NeoForge (Spark, AllTheLeaks, TickProfiler, etc.)
+//     Inclui sistema de debounce → evita flood de mensagens duplicadas em pouco tempo.
+
+const lastMessages = new Map(); // cache { msg: timestamp }
+
+function shouldSend(msg, cooldownMs = 10_000) {
+  if (!msg) return false;
+  const now = Date.now();
+  const last = lastMessages.get(msg) || 0;
+
+  if (now - last < cooldownMs) {
+    // ainda dentro do intervalo → ignora
+    return false;
+  }
+
+  // atualiza timestamp
+  lastMessages.set(msg, now);
+  return true;
+}
 
 function translatePerformance(line) {
   let tipo = "default";
   let msg = null;
+
+  const lower = line.toLowerCase();
 
   // ======================
   // ⚠️ LAG VANILLA
@@ -20,17 +40,26 @@ function translatePerformance(line) {
   }
 
   // ======================
+  // 🔍 AllTheLeaks (NeoForge/ATM10)
+  // ======================
+  else if (lower.includes("alltheleaks") && lower.includes("memory leaks detected")) {
+    tipo = "memory";
+    msg = "🔍 **AllTheLeaks detectou possíveis vazamentos de memória.**";
+  }
+
+  // ======================
   // 🧹 Garbage Collector
   // ======================
-  else if (line.toLowerCase().includes("explicit gc") || line.toLowerCase().includes("explicit gc disabled")) {
+  else if (lower.includes("explicit gc") || lower.includes("explicit gc disabled")) {
     tipo = "memory";
     msg = "🧹 **Execução explícita do Garbage Collector detectada.**";
   }
 
   // ======================
-  // 💾 Memory leaks
+  // 💾 Memory leaks (genérico)
+  // ⚠️ Executa só se não for AllTheLeaks
   // ======================
-  else if (line.toLowerCase().includes("memory leak") || line.toLowerCase().includes("leaks detected")) {
+  else if ((lower.includes("memory leak") || lower.includes("leaks detected")) && !lower.includes("alltheleaks")) {
     tipo = "memory";
     msg = "💾 **Possível vazamento de memória detectado.**";
   }
@@ -38,7 +67,7 @@ function translatePerformance(line) {
   // ======================
   // ⛔ Watchdog (travamento)
   // ======================
-  else if (line.toLowerCase().includes("watchdog")) {
+  else if (lower.includes("watchdog")) {
     tipo = "watchdog";
     msg = "⛔ **Watchdog detectou travamento do servidor!**";
   }
@@ -46,12 +75,12 @@ function translatePerformance(line) {
   // ======================
   // 📊 Spark profiler
   // ======================
-  else if (line.toLowerCase().includes("spark profiler")) {
+  else if (lower.includes("spark profiler")) {
     tipo = "profiler";
     msg = "📊 **Spark registrou dados de performance.**";
   }
 
-  else if (line.toLowerCase().includes("spark heapdump")) {
+  else if (lower.includes("spark heapdump")) {
     tipo = "memory";
     msg = "📊 **Spark gerou um heapdump de memória (análise de consumo).**";
   }
@@ -59,25 +88,22 @@ function translatePerformance(line) {
   // ======================
   // 🕒 TickProfiler (Forge)
   // ======================
-  else if (line.toLowerCase().includes("tickprofiler")) {
+  else if (lower.includes("tickprofiler")) {
     tipo = "profiler";
     msg = "🕒 **TickProfiler registrou análise de performance (ticks por segundo).**";
   }
 
   // ======================
-  // 🔍 AllTheLeaks (NeoForge/ATM10)
+  // 🐌 Processos lentos genéricos
   // ======================
-  else if (line.toLowerCase().includes("alltheleaks")) {
-    tipo = "memory";
-    msg = "🔍 **AllTheLeaks detectou possíveis vazamentos de memória.**";
-  }
-
-  // ======================
-  // Mods que avisam de processamento lento
-  // ======================
-  else if (line.toLowerCase().includes("ms behind") || line.toLowerCase().includes("took too long")) {
+  else if (lower.includes("ms behind") || lower.includes("took too long")) {
     tipo = "lag";
     msg = "🐌 **Um processo demorou mais do que o esperado (lag).**";
+  }
+
+  // 🔙 Retorna só se a mensagem for nova ou estiver fora do cooldown
+  if (!shouldSend(msg)) {
+    return { tipo: "default", msg: null }; // ignora duplicado
   }
 
   return { tipo, msg };
