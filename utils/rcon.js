@@ -1,30 +1,47 @@
 // utils/rcon.js
-// ✳️ Funções utilitárias para falar com o RCON do Minecraft de forma segura.
-//    Padrão: conectar → enviar → encerrar, sempre com try/finally.
+// ✳️ Este módulo é responsável por fazer a conexão RCON com o servidor Minecraft,
+//     enviar um comando e devolver a resposta.
+//     Sempre com segurança: abre conexão → envia → fecha.
+//     Assim a gente não deixa conexões "presas" (leak).
 
-const { Rcon } = require("rcon-client");
-const config = require("../config/config");
+const { Rcon } = require("rcon-client"); // 📦 biblioteca que sabe falar o protocolo RCON
+const { RCON_HOST, RCON_PORT, RCON_PASS } = require("../config/config"); 
+// 🔑 Pegamos host, porta e senha do arquivo config (mais seguro do que hardcode)
 
-/**
- * Envia um comando via RCON e retorna a resposta como string.
- * Garante que a conexão será encerrada, mesmo se der erro.
- * @param {string} command - Comando do console do Minecraft (ex: "list", "time set day")
- * @returns {Promise<string>}
- */
+
+// 🧩 Função principal para enviar comandos.
+//     Você chama: await rconSend("comando")
+//     E recebe de volta a resposta do servidor.
 async function rconSend(command) {
   let rcon;
+
   try {
+    // 1) Conectar ao RCON do servidor
     rcon = await Rcon.connect({
-      host: config.RCON_HOST,
-      port: config.RCON_PORT,
-      password: config.RCON_PASS
+      host: RCON_HOST,
+      port: RCON_PORT,
+      password: RCON_PASS
     });
-    const res = await rcon.send(command);
-    return res;
+
+    // 2) Enviar comando
+    const response = await rcon.send(command);
+
+    // 3) Retornar resposta para quem chamou
+    return response;
+
+  } catch (err) {
+    // Em caso de erro, logamos para debug e repassamos
+    console.error(`❌ Erro ao enviar comando RCON: ${err.message}`);
+    throw err;
+
   } finally {
-    // Fecha a conexão se chegou a abrir.
+    // 4) Fechar conexão SEMPRE (mesmo se deu erro)
     if (rcon) {
-      try { await rcon.end(); } catch (_) {}
+      try {
+        await rcon.end();
+      } catch (_) {
+        // ignora erros ao fechar
+      }
     }
   }
 }

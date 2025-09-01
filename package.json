@@ -10,7 +10,19 @@
   },
   "dependencies": {
     "discord.js": "^14.15.3",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
+    "node-fetch": "^3.3.2",
     "rcon-client": "^4.2.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jhown21/bot-discord.git"
+  },
+  "keywords": [],
+  "author": "Jhown",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jhown21/bot-discord/issues"
+  },
+  "homepage": "https://github.com/Jhown21/bot-discord#readme"
 }

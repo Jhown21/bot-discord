@@ -1,41 +1,59 @@
 // index.js
-// ✳️ Este é o arquivo principal: cria o cliente do Discord, carrega eventos e faz login.
+// 🚀 Ponto de entrada do bot
 
-// 1) Carrega variáveis de ambiente do arquivo .env (ex: DISCORD_TOKEN)
-require("dotenv").config();
-
-// 2) Importa classes do discord.js
+require("dotenv").config(); // carrega variáveis do .env
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
-
-// 3) Módulos nativos do Node para ler pastas/arquivos (vamos carregar eventos automaticamente)
 const fs = require("fs");
 const path = require("path");
 
-// 4) Carrega nossa configuração consolidada (lê process.env e valida)
-const config = require("./config/config");
-
-// 5) Cria a instância do cliente do Discord com os "intents"
-//    Intents dizem ao Discord "quais eventos eu quero receber".
+// ===============================
+// 1. Cria uma nova instância do cliente Discord
+// ===============================
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds,          // eventos de servidor (guild)
-    GatewayIntentBits.GuildMessages,   // eventos de mensagens em canais de texto
-    GatewayIntentBits.MessageContent   // permite ler o conteúdo da mensagem (texto)
+    GatewayIntentBits.Guilds,          // eventos de servidores
+    GatewayIntentBits.GuildMessages,   // mensagens nos canais
+    GatewayIntentBits.MessageContent   // ler conteúdo das mensagens
   ]
 });
 
-// 6) Espaço para comandos (no futuro, quando você criar /comandos)
+// ===============================
+// 2. Cria a coleção de comandos
+// ===============================
 client.commands = new Collection();
 
-// 7) Carrega automaticamente todos os eventos de ./events/*.js
-//    Assim, para adicionar um evento novo, basta criar um arquivo lá.
+// ===============================
+// 3. Carregar comandos (suporta subpastas)
+// ===============================
+const foldersPath = path.join(__dirname, "commands");
+const commandFolders = fs.readdirSync(foldersPath);
+
+for (const folder of commandFolders) {
+  const commandsPath = path.join(foldersPath, folder);
+  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
+
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+
+    if ("data" in command && "execute" in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.warn(`⚠️ O comando em ${filePath} não tem "data" ou "execute".`);
+    }
+  }
+}
+
+// ===============================
+// 4. Carregar eventos
+// ===============================
 const eventsPath = path.join(__dirname, "events");
-const eventFiles = fs.readdirSync(eventsPath).filter(f => f.endsWith(".js"));
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith(".js"));
 
 for (const file of eventFiles) {
-  const event = require(path.join(eventsPath, file));
+  const filePath = path.join(eventsPath, file);
+  const event = require(filePath);
 
-  // Espera-se que cada arquivo exporte { name, once, execute }
   if (event.once) {
     client.once(event.name, (...args) => event.execute(...args, client));
   } else {
@@ -43,5 +61,28 @@ for (const file of eventFiles) {
   }
 }
 
-// 8) Faz login no Discord com o token (nunca codifique token aqui, use .env!)
-client.login(config.DISCORD_TOKEN);
+// ===============================
+// 5. Listener para interações (Slash Commands)
+// ===============================
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isCommand()) return;
+
+  const command = client.commands.get(interaction.commandName);
+
+  if (!command) {
+    console.error(`❌ Comando não encontrado: ${interaction.commandName}`);
+    return;
+  }
+
+  try {
+    await command.execute(interaction, client);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: "❌ Erro ao executar o comando.", ephemeral: true });
+  }
+});
+
+// ===============================
+// 6. Login
+// ===============================
+client.login(process.env.DISCORD_TOKEN);
