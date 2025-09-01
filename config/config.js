@@ -34,7 +34,10 @@ const config = {
   RCON_PASS: required("RCON_PASS", process.env.RCON_PASS),
 
   // Logs (para quando você criar o watcher de latest.log)
-  LOG_FILE: required("LOG_FILE", process.env.LOG_FILE)
+  LOG_FILE: required("LOG_FILE", process.env.LOG_FILE),
+
+  // Mandar eventos para o canal de texto tambem
+  SEND_EVENTS_TO_CHAT: process.env.SEND_EVENTS_TO_CHAT === "true",
 };
 
 module.exports = config;
