@@ -1,51 +1,41 @@
-                  ┌──────────────────────────┐
-                  │        index.js          │
-                  │ (ponto de entrada do bot)│
-                  └────────────┬─────────────┘
-                               │
-        ┌──────────────────────┴─────────────────────────┐
-        │                                                │
- ┌──────▼───────┐                                 ┌──────▼──────┐
- │   events/    │                                 │   log/      │
- │ (Discord.js) │                                 │ (Minecraft) │
- └──────┬───────┘                                 └──────┬──────┘
-        │                                                │
-┌───────▼─────────┐                              ┌───────▼─────────┐
-│ clientReady.js  │                              │ logHandler.js   │
-│ inicia watchers │                              │ lê latest.log   │
-│ updateStatus    │                              │ emite "logLine" │
-├─────────────────┤                              └───────┬─────────┘
-│ messageCreate.js│                                      │
-│ novas msgs DC   │                                      │
-│ → router.js     │                                      │
-├─────────────────┤                                      │
-│ discordChat.js  │                                      │
-│ integra MC ↔ DC │                                      │
-├─────────────────┤                                      │
-│ ignore.js       │                                      │
-│ filtra msgs     │                                      │
-└─────────────────┘                                      │
-                                                         │
-      ┌─────────────────────────┬────────────────────────┼───────────────────────────┐
-      │                         │                        │                           │
-┌─────▼──────┐          ┌───────▼────────┐       ┌───────▼────────────┐      ┌───────▼──────────┐
-│ chatLog.js │          │ eventLog.js    │       │ performanceLog.js  │      │ fullLog.js       │
-│ <nick> msg │          │ join/quit/etc. │       │ lag, watchdog, etc │      │ despeja tudo     │
-│ → CHAT     │          │ → LOGS (e CHAT │       │ → LOGS perf        │      │ → canal debug    │
-└─────┬──────┘          │ se flag = true)│       └─────────┬──────────┘      └──────────────────┘
-      │                 └─────────┬──────┘                 │
-      │                           │                        │
-┌─────▼───────────┐      ┌────────▼──────────┐    ┌────────▼───────────┐
-│ utils/avatar.js │      │ utils/translate.js│    │ utils/translatePerf│
-│ resolve avatar  │      │ traduz eventos    │    │ traduz perf +      │
-│ (mc-heads.net)  │      │ retorna tipo/msg  │    │ debounce anti-flood│
-└─────┬───────────┘      └───────────────────┘    └────────────────────┘
-      │
-┌─────▼───────────┐
-│ utils/playerCache│
-│ resolve UUID/nick│
-│ cache Mojang API │
-└──────────────────┘
+📦 bot-discord
+│── index.js              # ponto de entrada do bot
+│── .env                  # variáveis de ambiente (token, canais, flags)
+│── .env.example          # exemplo de configuração
+│── package.json          # dependências
+│── deploy-commands.js    # script para registrar slash commands
+│── Readme.md             # documentação
+│
+├── config/
+│   └── config.js         # junta e valida variáveis do .env
+│
+├── events/               # eventos do Discord.js
+│   ├── clientReady.js    # quando conecta, inicia watchers e atualiza status
+│   ├── messageCreate.js  # detecta novas mensagens → router.js
+│   ├── discordChat.js    # integra chat Discord ↔ Minecraft (via RCON)
+│   └── ignore.js         # filtra mensagens/usuários
+│
+├── log/                  # eventos do Minecraft (watch latest.log)
+│   ├── logHandler.js     # lê o latest.log e emite "logLine"
+│   ├── chatLog.js        # captura mensagens (<nick> msg) → canal CHAT
+│   ├── eventLog.js       # join, quit, death, advancements → LOGS/CHAT
+│   ├── performanceLog.js # detecta lag, watchdog, leaks → canal LOGS
+│   └── fullLog.js        # despeja tudo no canal de debug
+│
+├── handlers/             # comandos do Discord
+│   ├── router.js         # decide qual handler usar
+│   ├── normalHandler.js  # comandos comuns
+│   ├── adminHandler.js   # comandos admin/owner
+│   ├── consoleHandler.js # envia comandos direto no console MC (RCON)
+│   └── slashHandler.js   # comandos slash do Discord
+│
+└── utils/                # funções auxiliares
+    ├── avatar.js         # resolve avatar do jogador (mc-heads.net)
+    ├── playerCache.js    # cache Mojang API UUID ↔ nick
+    ├── translate.js      # traduz eventos MC → mensagens
+    ├── translatePerformance.js # traduz logs de performance (com debounce)
+    ├── rcon.js           # cliente RCON para executar comandos no MC
+    └── updateStatus.js   # atualiza status do bot no Discord
 
 
 📂 Pastas
