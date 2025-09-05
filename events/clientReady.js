@@ -7,7 +7,7 @@
 //  - PerformanceLog (lag, TPS, memória)
 
 // importa os utilitários/módulos que criamos
-const startStatusUpdater = require("../utils/updateStatus");
+const { updateStatus } = require("../utils/updateStatus");
 const { startLogHandler } = require("../log/logHandler"); // importa o start
 const startFullLog = require("../log/fullLog");
 const startEventLog = require("../log/eventLog");
@@ -24,7 +24,7 @@ module.exports = {
     startLogHandler();
 
     // 🔹 Conecta os módulos que escutam o logEmitter
-    startStatusUpdater(client);
+    updateStatus(client);
     startFullLog(client);
     startEventLog(client);
     startPerformanceLog(client);

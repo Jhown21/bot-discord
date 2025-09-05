@@ -1,14 +1,11 @@
 // utils/updateStatus.js
-// ✳️ Atualiza o status do bot no Discord dinamicamente
-// Mostra quantos jogadores estão online e seus nomes
-
-const { rcon } = require("./rcon");
+const { rconSend } = require("./rcon");  // importa certo
 
 async function updateStatus(client) {
   async function refresh() {
     try {
       // consulta lista de jogadores via RCON
-      const response = await rcon.send("list");
+      const response = await rconSend("list");   // usa rconSend, não rcon.send
       // resposta típica: "There are 2 of a max of 20 players online: Steve, Alex"
       const match = response.match(/There are (\d+) of a max \d+ players online: ?(.*)?/);
 
